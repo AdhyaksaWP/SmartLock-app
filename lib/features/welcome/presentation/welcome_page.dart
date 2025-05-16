@@ -103,7 +103,10 @@ class _WelcomePageState extends State<WelcomePage> {
                       ),
                       child: ElevatedButton(
                         onPressed: () {
-                          loginDialog(context: context);
+                          showDialog(
+                            context: context, 
+                            builder: (_) => LoginDialog()
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           elevation: 0, // No default shadow

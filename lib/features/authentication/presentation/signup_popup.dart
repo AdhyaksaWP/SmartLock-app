@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:smartlock_app/features/authentication/presentation/signup_popup.dart';
+import 'package:smartlock_app/features/authentication/presentation/login_popup.dart';
 
-class LoginDialog extends StatefulWidget{
-  const LoginDialog({super.key});
+class SignUpDialog extends StatefulWidget{
+  const SignUpDialog({super.key});
 
   @override
-  State<LoginDialog> createState() => _LoginDialogState();
+  State<SignUpDialog> createState() => _SignUpDialogState();
 }
 
-class _LoginDialogState extends State<LoginDialog>{
+class _SignUpDialogState extends State<SignUpDialog>{
   final TextEditingController email = TextEditingController();
   final TextEditingController password = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -30,7 +30,7 @@ class _LoginDialogState extends State<LoginDialog>{
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Login",
+                "Sign Up",
                 style: TextStyle(
                   fontWeight: FontWeight.w700
                 ),
@@ -65,20 +65,16 @@ class _LoginDialogState extends State<LoginDialog>{
               )
             ],
           ),
-          Text(
-            "Jika Anda tidak memiliki akun\nsilahkan Sign Up terlebih dahulu",
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFFCECECE)
-            ),
-          )
         ],
       ),
       content: 
       SizedBox(
-        height: MediaQuery.of(context).size.height / 3,
+        height: MediaQuery.of(context).size.height / 2.5,
         child: Column(
           children: <Widget>[
+              TextField(
+                decoration: InputDecoration(hintText: "nama"),
+              ),
               TextField(
                 decoration: InputDecoration(hintText: "email"),
               ),
@@ -113,8 +109,6 @@ class _LoginDialogState extends State<LoginDialog>{
                   ),
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop();  
-                      SignUpDialog();
                     },
                     style: ElevatedButton.styleFrom(
                       elevation: 0, // No default shadow
@@ -168,9 +162,14 @@ class _LoginDialogState extends State<LoginDialog>{
                 ),
                 child: ElevatedButton(
                   onPressed: () {
+                    Navigator.of(context).pop();
+                    showDialog(
+                      context: context, 
+                      builder: (_) => LoginDialog()
+                    );
                   },
                   style: ElevatedButton.styleFrom(
-                    elevation: 0, // No default shadow
+                    elevation: 0, 
                     backgroundColor: Colors.transparent,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
@@ -198,5 +197,6 @@ class _LoginDialogState extends State<LoginDialog>{
         ),
       ), 
     );
-  }
+  } 
 }
+
