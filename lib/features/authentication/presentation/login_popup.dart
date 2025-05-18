@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:smartlock_app/features/authentication/presentation/signup_popup.dart';
+import 'package:smartlock_app/features/authentication/domain/auth_domain.dart';
+import 'package:smartlock_app/widgets/button.dart';
+import 'package:smartlock_app/features/authentication/data/auth_repository.dart';
 
 class LoginDialog extends StatefulWidget{
   const LoginDialog({super.key});
@@ -9,8 +11,51 @@ class LoginDialog extends StatefulWidget{
 }
 
 class _LoginDialogState extends State<LoginDialog>{
-  final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
+  final AuthDomain authDomain = AuthDomain(AuthRepository());
+
+  TextEditingController email = TextEditingController();
+  TextEditingController password = TextEditingController();
+  TextEditingController name = TextEditingController();
+
+  bool _isLogin = true;
+  String errorMsg = "";
+
+  void register() async {
+    if (_isLogin){
+      setState(() {
+        _isLogin = false;
+      });
+      return;
+    }
+    Map<String, dynamic> res = await authDomain.executeRegister(
+      email: email.text, 
+      password: password.text,
+    );
+    if (res.containsKey("error")){
+      handleError(res);
+    }
+  }
+
+  void login() async {
+    if (!_isLogin){
+      setState(() {
+        _isLogin = true;
+      });
+    }
+    Map<String, dynamic> res = await authDomain.executeLogin(
+      email: email.text, 
+      password: password.text
+    );
+    if (res.containsKey("error")){
+      handleError(res);
+    }
+  }
+
+  void handleError(res){
+    setState(() {
+      errorMsg = res["error"];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +75,7 @@ class _LoginDialogState extends State<LoginDialog>{
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Login",
+                _isLogin ? "Login" : "Register",
                 style: TextStyle(
                   fontWeight: FontWeight.w700
                 ),
@@ -65,6 +110,7 @@ class _LoginDialogState extends State<LoginDialog>{
               )
             ],
           ),
+          if (errorMsg != "") Text(errorMsg),
           Text(
             "Jika Anda tidak memiliki akun\nsilahkan Sign Up terlebih dahulu",
             style: TextStyle(
@@ -76,124 +122,34 @@ class _LoginDialogState extends State<LoginDialog>{
       ),
       content: 
       SizedBox(
-        height: MediaQuery.of(context).size.height / 3,
+        height: MediaQuery.of(context).size.height / 2.8 ,
         child: Column(
           children: <Widget>[
-              TextField(
-                decoration: InputDecoration(hintText: "email"),
-              ),
-              TextField(
-                decoration: InputDecoration(hintText: "password"),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
-                child:  Container(
-                  width: 200,
-                  height: 65,
-                  margin: EdgeInsets.fromLTRB(0, 0, 0, 20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0xFF94F5FA), // light cyan top
-                        Color(0xFF35F5FF), // bright cyan bottom
-                      ],
-                      stops: [0.0, 1.0], // smooth full range
-                    ),
-                    borderRadius: BorderRadius.circular(15), // rounded like the image
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color.fromARGB(170, 180, 180, 180),
-                        spreadRadius: 1,
-                        blurRadius: 10,
-                        offset: Offset(0, 4), // vertical offset
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();  
-                      SignUpDialog();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0, // No default shadow
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: const Text(
-                      "Sign Up",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            color: Color.fromARGB(170, 180, 180, 180),
-                            blurRadius: 10,
-                            offset: Offset(0, 4), // vertical offset
-                          ),
-                        ]
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Container(
-                width: 200,
-                height: 65,
-                margin: EdgeInsets.fromLTRB(0, 0, 0, 20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF94F5FA), // light cyan top
-                      Color(0xFF35F5FF), // bright cyan bottom
-                    ],
-                    stops: [0.0, 1.0], // smooth full range
-                  ),
-                  borderRadius: BorderRadius.circular(15), // rounded like the image
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color.fromARGB(170, 180, 180, 180),
-                      spreadRadius: 1,
-                      blurRadius: 10,
-                      offset: Offset(0, 4), // vertical offset
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                  },
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0, // No default shadow
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: const Text(
-                    "Login",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Color.fromARGB(170, 180, 180, 180),
-                          blurRadius: 10,
-                          offset: Offset(0, 4), // vertical offset
-                        ),
-                      ]
-                    ),
-                  ),
-                ),
+            TextField(
+              controller: email,
+              decoration: const InputDecoration(hintText: "email"),
+            ),
+            TextField(
+              controller: password,
+              decoration: const InputDecoration(hintText: "password"),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+              child: Button(
+                btnText: "Sign Up",
+                onPressed: () {
+                  // Navigator.of(context).pop();
+                  register();
+                },
               )
+            ),
+            Button(
+              btnText: "Login",
+              onPressed: () {
+                // Navigator.of(context).pop();
+                login();
+              },
+            )
           ],
         ),
       ), 
