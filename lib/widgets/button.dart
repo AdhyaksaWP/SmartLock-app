@@ -34,7 +34,7 @@ class Button extends StatelessWidget  {
         borderRadius: BorderRadius.circular(15), 
         boxShadow: [
           BoxShadow(
-            color: Color.fromARGB(170, 121, 48, 48),
+            color: Colors.grey,
             spreadRadius: 1,
             blurRadius: 10,
             offset: Offset(0, 4),
