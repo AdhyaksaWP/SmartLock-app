@@ -8,7 +8,7 @@ class SocketService {
 
   Future<Map<String, dynamic>> remoteServerConnect() async {
     try {
-      socket = await Socket.connect('192.168.8.226', 5000); 
+      socket = await Socket.connect('x', 5000); 
 
       socket.listen((data) {
         final message = utf8.decode(data).trim();
