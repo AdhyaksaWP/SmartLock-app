@@ -1,34 +1,34 @@
 import 'package:smartlock_app/features/dashboard/data/socket_service.dart';
-import 'dart:async';
 
 class SocketDomain {
-  final SocketService service;
+  final WebSocketService service;
   SocketDomain(this.service);
 
-  Future<Map<String, dynamic>> sendCommand(Map<String,dynamic> command) async {
+  Future<Map<String, dynamic>> sendCommand(Map<String, dynamic> command) async {
     if (command.containsKey("user") && command.containsKey("state")) {
       try {
-        Map<String,dynamic> resCommand = await service.sendData(command);
+        String cmd = command["state"].toString(); // "0" or "1"
+        Map<String, dynamic> resCommand = await service.sendData(cmd);
 
-        // Check the response given from the server when client send succeeds
-        if (resCommand.containsKey("status") && resCommand["status"] == 200){
-          Map<String,dynamic> resData = await service.getData();
+        if (resCommand["status"] == 200) {
+          Map<String, dynamic> resData = await service.getData();
           return resData;
         }
+
         return {
           "status": 500,
-          "error": "Data was sent but could not fetch from server"
+          "error": "Command sent but no response"
         };
       } catch (e) {
         return {
           "status": 500,
-          "user": e
+          "error": e.toString()
         };
       }
     } else {
       return {
         "status": 500,
-        "user": "Json badly formatted"
+        "error": "Json badly formatted"
       };
     }
   }

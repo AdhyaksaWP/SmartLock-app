@@ -1,67 +1,55 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:async';
 
-class SocketService {
-  late Socket socket;
-  final StreamController<Map<String, dynamic>> _controller = StreamController.broadcast();
+class WebSocketService {
+  WebSocket? _socket;
+  final _controller = StreamController<Map<String, dynamic>>.broadcast();
 
-  Future<Map<String, dynamic>> remoteServerConnect() async {
+  Future<Map<String, dynamic>> connect(String username) async {
     try {
-      socket = await Socket.connect('x', 5000); 
+      final uri = Uri.parse('ws://x:5000/ws/$username/lock/locking');
 
-      socket.listen((data) {
-        final message = utf8.decode(data).trim();
-        try {
-          final decoded = jsonDecode(message);
-          _controller.add(decoded); 
-        } catch (e) {
-          _controller.add({
-            "status": 500,
-            "error": "Invalid response from server"
-          });
-        }
-      });
+      _socket = await WebSocket.connect(uri.toString());
 
-      return {
-        "status": 200,
-        "message": "Socket connected!"
-      };
+      _socket!.listen(
+        (data) {
+          try {
+            // If server sends plain string (not JSON), wrap it
+            _controller.add({"status": 200, "message": data});
+          } catch (e) {
+            _controller.add({"status": 500, "error": "Invalid response"});
+          }
+        },
+        onDone: () {
+          print('WebSocket connection closed');
+        },
+        onError: (error) {
+          print('WebSocket error: $error');
+        },
+      );
+
+      return {"status": 200, "message": "WebSocket connected!"};
     } catch (e) {
-      return {
-        "status": 500,
-        "error": "Error 1"
-      };
+      return {"status": 500, "error": "Connection failed: $e"};
     }
   }
 
-  Future<Map<String, dynamic>> remoteServerDisconnect() async {
+  Future<Map<String, dynamic>> disconnect() async {
     try {
-      socket.destroy();
-      return {
-        "status": 200,
-        "message": "Socket gracefully disconnected"
-      };
+      await _socket?.close();
+      return {"status": 200, "message": "WebSocket gracefully disconnected"};
     } catch (e) {
-      return {
-        "status": 500,
-        "message": e
-      };
+      return {"status": 500, "message": e.toString()};
     }
   }
 
-  Future<Map<String, dynamic>> sendData(Map<String, dynamic> command) async {
+  Future<Map<String, dynamic>> sendData(String command) async {
     try {
-      socket.write(jsonEncode(command) + '\n');
-      return {
-        "status": 200,
-        "message": "Data sent!"
-      };
+      _socket?.add(command);
+      return {"status": 200, "message": "Command sent: $command"};
     } catch (e) {
-      return {
-        "status": 500,
-        "error": e.toString()
-      };
+      return {"status": 500, "error": e.toString()};
     }
   }
 

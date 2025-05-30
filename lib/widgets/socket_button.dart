@@ -1,5 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:smartlock_app/features/dashboard/data/socket_service.dart';
 import 'package:smartlock_app/features/dashboard/domain/socket_domain.dart';
 import 'package:smartlock_app/widgets/button.dart';
@@ -12,8 +12,9 @@ class SocketButtons extends StatefulWidget {
 }
 
 class _SocketButtonState extends State<SocketButtons> {
-  final socketService = SocketService();
+  final socketService = WebSocketService();
   late SocketDomain socketDomain;
+  String ipAdress = "";
 
   final FirebaseAuth auth = FirebaseAuth.instance;
   bool isLocked = false;
@@ -21,7 +22,15 @@ class _SocketButtonState extends State<SocketButtons> {
   bool isConnected = false;
 
   void onConnect() async {
-    final result = await socketService.remoteServerConnect();
+    User? user = auth.currentUser;
+    if (user == null) {
+      setState(() {
+        response = "User not logged in.";
+      });
+      return;
+    }
+
+    final result = await socketService.connect();
     socketDomain = SocketDomain(socketService);
 
     setState(() {
@@ -30,9 +39,9 @@ class _SocketButtonState extends State<SocketButtons> {
     });
   }
 
+
   void onDisconnect() async {
-    final result = await socketService.remoteServerDisconnect();
-    socketDomain = SocketDomain(socketService);
+    final result = await socketService.disconnect();
 
     setState(() {
       isConnected = false;
@@ -116,7 +125,6 @@ class _SocketButtonState extends State<SocketButtons> {
             ),
           ),
         ),
-        // if (response != '') Text(response),
         Button(
           btnHeight: 55,
           onPressed: isConnected ? onDisconnect : onConnect,
