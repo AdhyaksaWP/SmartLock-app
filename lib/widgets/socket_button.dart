@@ -5,7 +5,9 @@ import 'package:smartlock_app/features/dashboard/domain/socket_domain.dart';
 import 'package:smartlock_app/widgets/button.dart';
 
 class SocketButtons extends StatefulWidget {
-  const SocketButtons({super.key});
+  final String ipAddress; // New field
+
+  const SocketButtons({super.key, required this.ipAddress}); // Update constructor
 
   @override
   State<SocketButtons> createState() => _SocketButtonState();
@@ -14,12 +16,20 @@ class SocketButtons extends StatefulWidget {
 class _SocketButtonState extends State<SocketButtons> {
   final socketService = WebSocketService();
   late SocketDomain socketDomain;
-  String ipAdress = "";
-
   final FirebaseAuth auth = FirebaseAuth.instance;
+
   bool isLocked = false;
   String response = '';
   bool isConnected = false;
+
+  late String ipAddress;
+
+  @override
+  void initState() {
+    super.initState();
+    ipAddress = widget.ipAddress; // Get IP from widget
+    socketDomain = SocketDomain(socketService);
+  }
 
   void onConnect() async {
     User? user = auth.currentUser;
@@ -30,15 +40,19 @@ class _SocketButtonState extends State<SocketButtons> {
       return;
     }
 
-    final result = await socketService.connect();
-    socketDomain = SocketDomain(socketService);
+    final result = await socketService.connect(ipAddress);
 
     setState(() {
-      isConnected = true;
+      isConnected = result["status"] == 200;
       response = result.toString();
     });
-  }
 
+    socketService.stream.listen((event) {
+      setState(() {
+        response = event['message'].toString();
+      });
+    });
+  }
 
   void onDisconnect() async {
     final result = await socketService.disconnect();
@@ -76,19 +90,19 @@ class _SocketButtonState extends State<SocketButtons> {
       children: [
         Text(
           isLocked ? "Status: Locked" : "Status: Unlocked",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         ),
         Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
+            ),
             onPressed: onData,
             child: Container(
               height: 200,
@@ -129,8 +143,9 @@ class _SocketButtonState extends State<SocketButtons> {
           btnHeight: 55,
           onPressed: isConnected ? onDisconnect : onConnect,
           btnText: isConnected ? "Disconnect" : "Connect",
-          colors: isConnected ? const [ Color(0xFFFF5F5F),Color(0xFFFB3B3B)] : 
-                                const [Color(0xFFA1F0A2), Color(0xFF60FF62)],
+          colors: isConnected
+              ? const [Color(0xFFFF5F5F), Color(0xFFFB3B3B)]
+              : const [Color(0xFFA1F0A2), Color(0xFF60FF62)],
         ),
       ],
     );

@@ -132,6 +132,7 @@ class _LoginDialogState extends State<LoginDialog>{
             TextField(
               controller: password,
               decoration: const InputDecoration(hintText: "password"),
+              obscureText: true,
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),

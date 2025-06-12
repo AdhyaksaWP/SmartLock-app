@@ -11,7 +11,7 @@ class SocketDomain {
         Map<String, dynamic> resCommand = await service.sendData(cmd);
 
         if (resCommand["status"] == 200) {
-          Map<String, dynamic> resData = await service.getData();
+          Map<String, dynamic> resData = await service.getStatus();
           return resData;
         }
 

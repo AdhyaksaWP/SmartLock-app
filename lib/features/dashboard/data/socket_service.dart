@@ -1,35 +1,28 @@
 import 'dart:async';
-import 'dart:convert';
+import 'dart:convert'; // For JSON
 import 'dart:io';
 
 class WebSocketService {
-  WebSocket? _socket;
+  WebSocket? _socket; // For locking/unlocking
   final _controller = StreamController<Map<String, dynamic>>.broadcast();
+  String? _ipAddress;
 
-  Future<Map<String, dynamic>> connect(String username) async {
+  // Connect for lock/unlock
+  Future<Map<String, dynamic>> connect(String ipAddress) async {
     try {
-      final uri = Uri.parse('ws://x:5000/ws/$username/lock/locking');
+      _ipAddress = ipAddress;
+      final uri = Uri.parse('ws://$ipAddress:5000/ws/oye123/lock/locking');
 
       _socket = await WebSocket.connect(uri.toString());
 
       _socket!.listen(
         (data) {
-          try {
-            // If server sends plain string (not JSON), wrap it
-            _controller.add({"status": 200, "message": data});
-          } catch (e) {
-            _controller.add({"status": 500, "error": "Invalid response"});
-          }
-        },
-        onDone: () {
-          print('WebSocket connection closed');
-        },
-        onError: (error) {
-          print('WebSocket error: $error');
+          final decoded = jsonDecode(data);
+          _controller.add({"status": 200, "message": decoded});
         },
       );
 
-      return {"status": 200, "message": "WebSocket connected!"};
+      return {"status": 200, "message": "Locking WebSocket connected!"};
     } catch (e) {
       return {"status": 500, "error": "Connection failed: $e"};
     }
@@ -38,22 +31,49 @@ class WebSocketService {
   Future<Map<String, dynamic>> disconnect() async {
     try {
       await _socket?.close();
-      return {"status": 200, "message": "WebSocket gracefully disconnected"};
+      return {"status": 200, "message": "Locking WebSocket gracefully disconnected"};
     } catch (e) {
       return {"status": 500, "message": e.toString()};
     }
   }
 
-  Future<Map<String, dynamic>> sendData(String command) async {
+  Future<Map<String, dynamic>> sendData(String value) async {
     try {
-      _socket?.add(command);
-      return {"status": 200, "message": "Command sent: $command"};
+      if (_socket == null) {
+        return {"status": 500, "error": "Locking WebSocket not connected"};
+      }
+      final command = jsonEncode({
+        "value": value
+      });
+      _socket!.add(command);
+      return {"status": 200, "message": "Lock command sent: $value"};
     } catch (e) {
       return {"status": 500, "error": e.toString()};
     }
   }
 
-  Future<Map<String, dynamic>> getData() async {
-    return await _controller.stream.first;
+  // New: separate status connection
+  Future<Map<String, dynamic>> getStatus() async {
+    if (_ipAddress == null) {
+      return {"status": 500, "error": "IP address not set"};
+    }
+
+    try {
+      final uri = Uri.parse('ws://$_ipAddress:5000/ws/oye123/lock/status');
+
+      final statusSocket = await WebSocket.connect(uri.toString());
+
+      // Receive one message
+      final data = await statusSocket.first.timeout(Duration(seconds: 5));
+      final decoded = jsonDecode(data);
+
+      await statusSocket.close();
+
+      return {"status": 200, "message": decoded};
+    } catch (e) {
+      return {"status": 500, "error": "Status request failed: $e"};
+    }
   }
+
+  Stream<Map<String, dynamic>> get stream => _controller.stream;
 }
